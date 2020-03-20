@@ -441,7 +441,8 @@
       appWatchInstaller.install();
       pageWatchInstaller.install();
       componentWatchInstaller.install();
-    }
+    },
+    verson: '0.0.1'
   };
 
   wxWatch.install();
