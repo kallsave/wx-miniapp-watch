@@ -1,5 +1,5 @@
 /*!
- * wx-watch.js v0.0.1
+ * wx-miniapp-watch.js v0.0.1
  * (c) 2019-2020 kallsave
  * Released under the MIT License.
  */

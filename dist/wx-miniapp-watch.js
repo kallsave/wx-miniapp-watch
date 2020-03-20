@@ -1,12 +1,12 @@
 /*!
- * wx-watch.js v0.0.1
+ * wx-miniapp-watch.js v0.0.1
  * (c) 2019-2020 kallsave
  * Released under the MIT License.
  */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
-  (global = global || self, global.WxWatch = factory());
+  (global = global || self, global.WxMiniappWatch = factory());
 }(this, (function () { 'use strict';
 
   const _toString = Object.prototype.toString;

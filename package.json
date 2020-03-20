@@ -1,11 +1,11 @@
 {
-  "name": "wx-watch",
+  "name": "wx-miniapp-watch",
   "version": "0.0.1",
   "description": "wx miniapp watch",
-  "main": "dist/wx-watch.js",
-  "module": "dist/wx-watch.esm.js",
+  "main": "dist/wx-miniapp-watch.js",
+  "module": "dist/wx-miniapp-watch.esm.js",
   "keywords": [
-    "wx-mixins"
+    "wx-miniapp-watch"
   ],
   "scripts": {
     "build": "node scripts/build.js",
