@@ -23,8 +23,8 @@ App({
   },
   watch: {
     test: {
-      handler(newVal) {
-        console.log(newVal)
+      handler(newVal, oldVal) {
+        console.log(newVal, oldVal)
       }
     }
   }
@@ -38,10 +38,32 @@ Page({
   },
   globalWatch: {
     test: {
+      handler(newVal, oldVal) {
+        console.log(newVal, oldVal)
+      }
+    }
+  },
+  watch: {
+    test: {
       handler(newVal) {
         console.log(newVal)
       }
-    }git
+    }
+  }
+})
+```
+
+```javascript
+Component({
+  data: {
+    test: 0
+  },
+  globalWatch: {
+    test: {
+      handler(newVal, oldVal) {
+        console.log(newVal, oldVal)
+      }
+    }
   },
   watch: {
     test: {
