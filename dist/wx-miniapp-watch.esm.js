@@ -368,22 +368,25 @@ function createAsynWatcher(data, expOrFn, fn, deep) {
   return new Watcher(data, expOrFn, fn, deep)
 }
 
-function watchData(data, watcher) {
+function watchData(vm, data, watcher) {
+  if (!isPlainObject(data)) {
+    return
+  }
   observe(data);
   for (const key in watcher) {
     const item = watcher[key];
     if (isFunction(item)) {
-      createAsynWatcher(data, key, item.bind(this));
+      createAsynWatcher(data, key, item.bind(vm));
     } else if (isPlainObject(item) && isFunction(item.handler)) {
       if (item.immediate) {
         item.handler(data[key]);
       }
-      createAsynWatcher(data, key, item.handler.bind(this), item.deep);
+      createAsynWatcher(data, key, item.handler.bind(vm), item.deep);
     }
   }
 }
 
-function mergeOptions(options, createdTimes, destroyedTimes, { watch, globalWatch } = { watch: 'watch', globalWatch: 'globalWatch' }) {
+function mergeOptions(options, createdTimes, destroyedTimes, { watch, globalWatch } = { watch: 'watch', globalWatch: 'globalWatch' }, isApp) {
   let createdTime;
   for (let i = 0; i < createdTimes.length; i++) {
     const item = createdTimes[i];
@@ -399,18 +402,19 @@ function mergeOptions(options, createdTimes, destroyedTimes, { watch, globalWatc
         const watcher = options[watch];
         if (isPlainObject(watcher)) {
           const data = this.data;
-          watchData(data, watcher);
+          watchData(this, data, watcher);
         }
       }
       if (globalWatch) {
         const globalWatcher = options[globalWatch];
         if (isPlainObject(globalWatcher)) {
-          try {
-            const globalData = getApp().globalData;
-            watchData(globalData, globalWatcher);
-          } catch (err) {
-            console.log(err);
+          let globalData;
+          if (!isApp) {
+            watchData(this, globalData, globalWatcher);
+          } else {
+            globalData = options.globalData;
           }
+          watchData(this, globalData, globalWatcher);
         }
       }
       return originCreatedTime.apply(this, arguments)
@@ -478,7 +482,7 @@ const wxWatch = {
     pageWatchInstaller.install();
     componentWatchInstaller.install();
   },
-  verson: '0.0.2'
+  verson: '0.0.3'
 };
 
 wxWatch.install();

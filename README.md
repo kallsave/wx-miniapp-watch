@@ -4,7 +4,10 @@ wx-watch
 Features
 ------------
 
-给微信小程序带来和vue体验的watch语法
+给微信小程序带来
+- 1.vue体验的watch语法(immediate, deep)
+- 2.全局状态管理globalWatch
+
 
 使用
 -----------
@@ -18,11 +21,27 @@ import 'wx-mixins'
 // index.js
 ```javascript
 App({
-  data: {
+  globalData: {
     test: 0
   },
-  watch: {
+  data: {
+    count: 1
+  },
+  // 能监听在app.globalData申明的变量
+  globalWatch: {
+     // 监听app.globalData.test的变化
     test: {
+      handler(newVal, oldVal) {
+        console.log(newVal, oldVal)
+      },
+      // 立刻执行
+      immediate: true
+    }
+  },
+  // 能监听在data申明的变量
+  watch: {
+    // 监听data.count的变化
+    count: {
       handler(newVal, oldVal) {
         console.log(newVal, oldVal)
       }
@@ -34,17 +53,21 @@ App({
 ```javascript
 Page({
   data: {
-    test: 0
+    bar: 0
   },
+  // 能监听在app.globalData申明的变量
   globalWatch: {
+     // 监听app.globalData.test的变化
     test: {
       handler(newVal, oldVal) {
         console.log(newVal, oldVal)
       }
     }
   },
+  // 能监听在data申明的变量
   watch: {
-    test: {
+    // 监听data.bar的变化
+    bar: {
       handler(newVal) {
         console.log(newVal)
       }
@@ -56,8 +79,9 @@ Page({
 ```javascript
 Component({
   data: {
-    test: 0
+    foo: 0
   },
+  // 监听app.globalData.test的变化
   globalWatch: {
     test: {
       handler(newVal, oldVal) {
@@ -65,8 +89,10 @@ Component({
       }
     }
   },
+  // 能监听在properties, data申明的变量
   watch: {
-    test: {
+    // 监听data.foo的变化
+    foo: {
       handler(newVal) {
         console.log(newVal)
       }
@@ -74,4 +100,3 @@ Component({
   }
 })
 ```
-
