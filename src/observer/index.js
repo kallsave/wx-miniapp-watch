@@ -39,6 +39,7 @@ function defineReactive(obj, key, val, shallow) {
       if (newVal === val || (newVal !== newVal && val !== val)) {
         return
       }
+      const oldVal = val
       val = newVal
       // 属性更新后重新绑定
       childOb = !shallow && observe(newVal)

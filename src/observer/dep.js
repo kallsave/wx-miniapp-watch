@@ -1,3 +1,5 @@
+import { remove } from '../util/lang'
+
 let uid = 0
 
 // 属性的watch依赖收集器
@@ -19,6 +21,9 @@ export default class Dep {
   // 添加依赖
   depend() {
     Dep.target.addDep(this)
+  }
+  removeSub(sub) {
+    remove(this.subs, sub)
   }
 }
 
