@@ -1,6 +1,6 @@
 {
   "name": "wx-miniapp-watch",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "wx miniapp watch",
   "main": "dist/wx-miniapp-watch.js",
   "module": "dist/wx-miniapp-watch.esm.js",
