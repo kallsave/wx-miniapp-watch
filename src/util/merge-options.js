@@ -15,7 +15,7 @@ function watchData(vm, data, watcher) {
       createAsynWatcher(data, key, item.bind(vm))
     } else if (isPlainObject(item) && isFunction(item.handler)) {
       if (item.immediate) {
-        item.handler(data[key])
+        item.handler.call(vm, data[key])
       }
       createAsynWatcher(data, key, item.handler.bind(vm), item.deep)
     }

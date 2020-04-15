@@ -1,5 +1,5 @@
 /*!
- * wx-miniapp-watch.js v0.0.4
+ * wx-miniapp-watch.js v0.0.5
  * (c) 2019-2020 kallsave
  * Released under the MIT License.
  */
@@ -379,7 +379,7 @@ function watchData(vm, data, watcher) {
       createAsynWatcher(data, key, item.bind(vm));
     } else if (isPlainObject(item) && isFunction(item.handler)) {
       if (item.immediate) {
-        item.handler(data[key]);
+        item.handler.call(vm, data[key]);
       }
       createAsynWatcher(data, key, item.handler.bind(vm), item.deep);
     }
@@ -482,7 +482,7 @@ const wxWatch = {
     pageWatchInstaller.install();
     componentWatchInstaller.install();
   },
-  verson: '0.0.4'
+  verson: '0.0.5'
 };
 
 wxWatch.install();
