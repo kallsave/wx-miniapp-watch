@@ -410,7 +410,7 @@ function mergeOptions(options, createdTimes, destroyedTimes, { watch, globalWatc
         if (isPlainObject(globalWatcher)) {
           let globalData;
           if (!isApp) {
-            watchData(this, globalData, globalWatcher);
+            globalData = getApp().globalData;
           } else {
             globalData = options.globalData;
           }
