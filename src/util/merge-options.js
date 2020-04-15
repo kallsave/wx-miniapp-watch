@@ -1,5 +1,3 @@
-
-
 import { observe } from '../observer/index.js'
 import { createAsynWatcher } from '../observer/watcher.js'
 import { isPlainObject, isFunction, isArray } from './lang.js'
