@@ -33,8 +33,10 @@ App({
       handler(newVal, oldVal) {
         console.log(newVal, oldVal)
       },
-      // 立刻执行
-      immediate: true
+      // 第一次立刻执行
+      immediate: true,
+      // 是否是同步,默认异步
+      sync: true,
     }
   },
   // 能监听在data申明的变量
@@ -61,7 +63,11 @@ Page({
     test: {
       handler(newVal, oldVal) {
         console.log(newVal, oldVal)
-      }
+      },
+      // 第一次立刻执行
+      immediate: true,
+      // 是否是同步,默认异步
+      sync: true,
     }
   },
   // 能监听在data申明的变量
@@ -70,7 +76,11 @@ Page({
     bar: {
       handler(newVal) {
         console.log(newVal)
-      }
+      },
+      // 第一次立刻执行
+      immediate: true,
+      // 是否是同步,默认异步
+      sync: true,
     }
   }
 })
@@ -87,7 +97,11 @@ Component({
     test: {
       handler(newVal, oldVal) {
         console.log(newVal, oldVal)
-      }
+      },
+      // 第一次立刻执行
+      immediate: true,
+      // 是否是同步,默认异步
+      sync: true,
     }
   },
   // 能监听在properties, data申明的变量
@@ -96,7 +110,11 @@ Component({
     foo: {
       handler(newVal) {
         console.log(newVal)
-      }
+      },
+      // 第一次立刻执行
+      immediate: true,
+      // 是否是同步,默认异步
+      sync: true,
     }
   }
 })

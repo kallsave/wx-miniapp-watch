@@ -1,6 +1,8 @@
-import { observe } from '../observer/index.js'
-import { createAsynWatcher } from '../observer/watcher.js'
-import { isPlainObject, isFunction, isArray } from './lang.js'
+
+
+import { observe } from '../observer/index'
+import { createWatcher } from '../observer/watcher'
+import { isPlainObject, isFunction, isArray } from './lang'
 
 function watchData(vm, data, watcher) {
   if (!isPlainObject(data)) {
@@ -10,12 +12,12 @@ function watchData(vm, data, watcher) {
   for (const key in watcher) {
     const item = watcher[key]
     if (isFunction(item)) {
-      createAsynWatcher(data, key, item.bind(vm))
+      createWatcher(data, key, item.bind(vm), false)
     } else if (isPlainObject(item) && isFunction(item.handler)) {
       if (item.immediate) {
         item.handler.call(vm, data[key])
       }
-      createAsynWatcher(data, key, item.handler.bind(vm), item.deep)
+      createWatcher(data, key, item.handler.bind(vm), item.deep, item.sync)
     }
   }
 }
@@ -45,6 +47,7 @@ export function mergeOptions(options, createdTimes, destroyedTimes, { watch, glo
           let globalData
           if (!isApp) {
             globalData = getApp().globalData
+            watchData(this, globalData, globalWatcher)
           } else {
             globalData = options.globalData
           }
