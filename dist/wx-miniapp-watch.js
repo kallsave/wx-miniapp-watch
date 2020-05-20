@@ -1,5 +1,5 @@
 /*!
- * wx-miniapp-watch.js v1.0.1
+ * wx-miniapp-watch.js v1.0.2
  * (c) 2019-2020 kallsave
  * Released under the MIT License.
  */
@@ -503,7 +503,7 @@ const wxWatch = {
     pageWatchInstaller.install();
     componentWatchInstaller.install();
   },
-  verson: '1.0.1'
+  verson: '1.0.2'
 };
 
 wxWatch.install();
