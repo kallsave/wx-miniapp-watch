@@ -1,5 +1,5 @@
 /*!
- * wx-miniapp-watch.js v1.0.2
+ * wx-miniapp-watch.js v1.0.3
  * (c) 2019-2020 kallsave
  * Released under the MIT License.
  */
@@ -327,16 +327,34 @@ function createWatcher(data, expOrFn, fn, deep, sync) {
   return new Watcher(data, expOrFn, fn, deep, sync)
 }
 
-function watchData(vm, data, watcher) {
+let hasObserveGlobalData = false;
+
+function watchData(vm, data, watcher, hookName, isGlobalWatch) {
   if (!isPlainObject(data)) {
     return
   }
-  observe(data);
+
+  if (!hasObserveGlobalData || !isGlobalWatch) {
+    if (isGlobalWatch) {
+      hasObserveGlobalData = true;
+    }
+    observe(data);
+  }
+  
   for (const key in watcher) {
     const item = watcher[key];
+    const value = data[key];
     if (isFunction(item)) {
+      if (value === undefined) {
+        warnMissMountedData(hookName, isGlobalWatch, key);
+        continue
+      }
       createWatcher(data, key, item.bind(vm), false, false);
     } else if (isPlainObject(item) && isFunction(item.handler)) {
+      if (value === undefined) {
+        warnMissMountedData(hookName, isGlobalWatch, key);
+        continue
+      }
       if (item.immediate) {
         item.handler.call(vm, data[key]);
       }
@@ -352,6 +370,15 @@ function getCreatedHook(options, createdHooks) {
       return hook
     }
   }
+}
+
+function warnMissMountedData(hookName, isGlobalWatch, key) {
+  const mountedData = isGlobalWatch ? 'app.globalData' : 'data';
+  console.warn(`${hookName} hook warn: the key '${key}' have to mounte in ${mountedData} to be watch`);
+}
+
+function warnMissCreaedHooks(hookName, createdHooks) {
+  console.warn(`${hookName} hook need ${createdHooks.join(' or ')} lifecycle function hook`);
 }
 
 function mergeOptions(
@@ -401,7 +428,7 @@ function mergeOptions(
     createdHookOptions[createdHook] = function () {
       if (hasWatchHook) {
         const data = this.data;
-        watchData(this, data, watcher);
+        watchData(this, data, watcher, watch, false);
       }
       if (hasGlobalWatchHook) {
         let globalData;
@@ -410,13 +437,13 @@ function mergeOptions(
         } else {
           globalData = options.globalData;
         }
-        watchData(this, globalData, globalWatcher);
+        watchData(this, globalData, globalWatcher, globalWatch, true);
       }
       return originCreatedHook.apply(this, arguments)
     };
   } else {
     const hookName = hasWatchHook ? watch : globalWatch;
-    console.warn(`${hookName} hook need ${createdHooks.join(' or ')} lifecycle function hook`);
+    warnMissCreaedHooks(hookName, createdHooks);
   }
   return options
 }
@@ -503,7 +530,7 @@ const wxWatch = {
     pageWatchInstaller.install();
     componentWatchInstaller.install();
   },
-  verson: '1.0.2'
+  verson: '1.0.3'
 };
 
 wxWatch.install();
