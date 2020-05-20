@@ -20,6 +20,13 @@ export function isFunction(value) {
   return toRawType(value) === 'Function'
 }
 
+export function isEmptyObject(value) {
+  if (isPlainObject(value)) {
+    return Object.keys(value).length === 0
+  }
+  return false
+}
+
 export function def(obj, key, val, enumerable) {
   Object.defineProperty(obj, key, {
     value: val,

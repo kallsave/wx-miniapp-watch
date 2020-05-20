@@ -1,7 +1,7 @@
 import { mergeOptions } from '../util/merge-options'
 
-const createdTimes = ['onLoad']
-const destroyedTimes = ['onUnload']
+const createdHooks = ['onLoad']
+const destroyedHooks = ['onUnload']
 const originPage = Page
 
 export default {
@@ -11,7 +11,14 @@ export default {
     }
     this.installed = true
     Page = function (options) {
-      options = mergeOptions(options, createdTimes, destroyedTimes)
+      options = mergeOptions(
+        options,
+        createdHooks,
+        destroyedHooks,
+        { watch: 'watch', globalWatch: 'globalWatch' },
+        false,
+        false,
+      )
       originPage(options)
     }
   }

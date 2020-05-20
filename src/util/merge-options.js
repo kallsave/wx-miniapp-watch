@@ -1,8 +1,11 @@
-
-
 import { observe } from '../observer/index'
 import { createWatcher } from '../observer/watcher'
-import { isPlainObject, isFunction, isArray } from './lang'
+import {
+  isPlainObject,
+  isFunction,
+  isArray,
+  isEmptyObject
+} from './lang'
 
 function watchData(vm, data, watcher) {
   if (!isPlainObject(data)) {
@@ -12,7 +15,7 @@ function watchData(vm, data, watcher) {
   for (const key in watcher) {
     const item = watcher[key]
     if (isFunction(item)) {
-      createWatcher(data, key, item.bind(vm), false)
+      createWatcher(data, key, item.bind(vm), false, false)
     } else if (isPlainObject(item) && isFunction(item.handler)) {
       if (item.immediate) {
         item.handler.call(vm, data[key])
@@ -22,40 +25,78 @@ function watchData(vm, data, watcher) {
   }
 }
 
-export function mergeOptions(options, createdTimes, destroyedTimes, { watch, globalWatch } = { watch: 'watch', globalWatch: 'globalWatch' }, isApp) {
-  let createdTime
-  for (let i = 0; i < createdTimes.length; i++) {
-    const item = createdTimes[i]
-    if (options[item]) {
-      createdTime = item
-      break
+function getCreatedHook(options, createdHooks) {
+  for (let i = 0; i < createdHooks.length; i++) {
+    const hook = createdHooks[i]
+    if (options[hook]) {
+      return hook
     }
   }
-  if (createdTime && isFunction(options[createdTime])) {
-    const originCreatedTime = options[createdTime]
-    options[createdTime] = function () {
-      if (watch) {
-        const watcher = options[watch]
-        if (isPlainObject(watcher)) {
-          const data = this.data
-          watchData(this, data, watcher)
-        }
+}
+
+export function mergeOptions(
+  options,
+  createdHooks,
+  destroyedHooks, 
+  { watch, globalWatch } = { watch: 'watch', globalWatch: 'globalWatch' },
+  isApp,
+  isComponent,
+) {
+  const watcher = options[watch]
+  const globalWatcher = options[globalWatch]
+  const hasWatchHook = watcher && isPlainObject(watcher)
+  const hasGlobalWatchHook = globalWatcher && isPlainObject(globalWatcher)
+
+  if (!hasWatchHook && !hasGlobalWatchHook) {
+    return options
+  }
+
+  let createdHookOptions
+  let createdHook
+  let originCreatedHook
+
+  if (!isComponent) {
+    createdHook = getCreatedHook(options, createdHooks)
+    createdHookOptions = options
+  } else {
+    const lifetimes = options.lifetimes
+    if (!lifetimes || isEmptyObject(lifetimes)) {
+      createdHook = getCreatedHook(options, createdHooks)
+      createdHookOptions = options
+    } else {
+      const assignOptions = {
+        ...options,
+        ...lifetimes,
       }
-      if (globalWatch) {
-        const globalWatcher = options[globalWatch]
-        if (isPlainObject(globalWatcher)) {
-          let globalData
-          if (!isApp) {
-            globalData = getApp().globalData
-            watchData(this, globalData, globalWatcher)
-          } else {
-            globalData = options.globalData
-          }
-          watchData(this, globalData, globalWatcher)
-        }
-      }
-      return originCreatedTime.apply(this, arguments)
+      createdHook = getCreatedHook(assignOptions, createdHooks)
+      createdHookOptions = lifetimes[createdHook] ? lifetimes : options
     }
+  }
+
+  originCreatedHook = createdHookOptions[createdHook]
+
+  const hasOriginCreatedHook = originCreatedHook && isFunction(originCreatedHook)
+
+  if (hasOriginCreatedHook) {
+    createdHookOptions[createdHook] = function () {
+      if (hasWatchHook) {
+        const data = this.data
+        watchData(this, data, watcher)
+      }
+      if (hasGlobalWatchHook) {
+        let globalData
+        if (!isApp) {
+          globalData = getApp().globalData
+        } else {
+          globalData = options.globalData
+        }
+        watchData(this, globalData, globalWatcher)
+      }
+      return originCreatedHook.apply(this, arguments)
+    }
+  } else {
+    const hookName = hasWatchHook ? watch : globalWatch
+    console.warn(`${hookName} hook need ${createdHooks.join(' or ')} lifecycle function hook`)
   }
   return options
 }

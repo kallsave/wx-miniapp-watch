@@ -12,9 +12,9 @@ const wxWatch = {
     pageWatchInstaller.install()
     componentWatchInstaller.install()
   },
-  verson: '1.0.0'
+  verson: '1.0.1'
 }
 
-export default wxWatch
-
 wxWatch.install()
+
+export default wxWatch

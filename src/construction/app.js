@@ -1,7 +1,7 @@
 import { mergeOptions } from '../util/merge-options'
 
-const createdTimes = ['onLaunch']
-const destroyedTimes = []
+const createdHooks = ['onLaunch']
+const destroyedHooks = []
 const originApp = App
 
 export default {
@@ -11,7 +11,14 @@ export default {
     }
     this.installed = true
     App = function (options) {
-      options = mergeOptions(options, createdTimes, destroyedTimes, { watch: 'watch' })
+      options = mergeOptions(
+        options,
+        createdHooks,
+        destroyedHooks,
+        { watch: 'watch', globalWatch: 'globalWatch' },
+        true,
+        false,
+      )
       originApp(options)
     }
   }
