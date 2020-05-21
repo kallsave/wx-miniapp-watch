@@ -33,6 +33,7 @@ function initWatch(vm, data, watch, isGlobalWatch) {
   }
   for (const key in watch) {
     const value = data[key]
+    warnMissDefined(isGlobalWatch, key)
     const handler = watch[key]
     if (isArray(handler)) {
       for (let i = 0; i < handler.length; i++) {
@@ -56,7 +57,6 @@ function getCreatedHook(options, createdHooks) {
 function getInitHook(options, createdHooks, isComponent) {
   let createdHookOptions
   let createdHook
-  let originCreatedHook
 
   if (!isComponent) {
     createdHook = getCreatedHook(options, createdHooks)
@@ -83,6 +83,12 @@ function getInitHook(options, createdHooks, isComponent) {
 
 function warnMissCreaedHooks(hookName, createdHooks) {
   console.warn(`${hookName} hook warn: using ${hookName} hook need ${createdHooks.join(' or ')} lifecycle function hook`)
+}
+
+function warnMissDefined(isGlobalWatch, key) {
+  const hookName = isGlobalWatch ? 'globalWatch' : 'watch'
+  const definedData = isGlobalWatch ? 'app.globalData' : 'data'
+  console.warn(`${hookName} hook warn: '${key}' have to defined in ${definedData} to be watch`)
 }
 
 export function mergeOptions(
@@ -129,7 +135,7 @@ export function mergeOptions(
       return originCreatedHook.apply(this, arguments)
     }
   } else {
-    const hookName = watch ? 'watch' : 'globalWatch'
+    const hookName = globalWatch ? 'globalWatch' : 'watch'
     warnMissCreaedHooks(hookName, createdHooks)
   }
   return options
