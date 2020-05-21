@@ -1,5 +1,5 @@
 /*!
- * wx-miniapp-watch.js v1.0.3
+ * wx-miniapp-watch.js v1.0.4
  * (c) 2019-2020 kallsave
  * Released under the MIT License.
  */
@@ -49,6 +49,8 @@ function remove(arr, item) {
     }
   }
 }
+
+function noop() { }
 
 const arrayProto = Array.prototype;
 
@@ -103,12 +105,15 @@ class Dep {
     this.subs.push(sub);
   }
   notify() {
-    this.subs.forEach(sub => {
-      sub.update();
-    });
+    const subs = this.subs;
+    for (let i = 0, l = subs.length; i < l; i++) {
+      subs[i].update();
+    }
   }
   depend() {
-    Dep.target.addDep(this);
+    if (Dep.target) {
+      Dep.target.addDep(this);
+    }
   }
   removeSub(sub) {
     remove(this.subs, sub);
@@ -116,45 +121,59 @@ class Dep {
 }
 
 Dep.target = null;
+const targetStack = [];
 
 function pushTarget(target) {
+  targetStack.push(target);
   Dep.target = target;
 }
 
 function popTarget() {
-  Dep.target = null;
+  targetStack.pop();
+  Dep.target = targetStack[targetStack.length - 1];
 }
 
 const hasProto = '__proto__' in {};
 
 function defineReactive(obj, key, val, shallow) {
+  const dep = new Dep();
+
   const property = Object.getOwnPropertyDescriptor(obj, key);
   if (property && property.configurable === false) {
     return
   }
-  if (arguments.length === 2) {
+
+  const getter = property && property.get;
+  const setter = property && property.set;
+  if ((!getter || setter) && arguments.length === 2) {
     val = obj[key];
   }
-  const dep = new Dep();
+  
   let childOb = !shallow && observe(val);
   Object.defineProperty(obj, key, {
     enumerable: true,
     configurable: true,
     get() {
+      const value = getter ? getter.call(obj) : val;
       if (Dep.target) {
         dep.depend();
         if (childOb) {
           childOb.dep.depend();
         }
       }
-      return val
+      return value
     },
     set(newVal) {
       /* eslint no-self-compare: "off" */
       if (newVal === val || (newVal !== newVal && val !== val)) {
         return
       }
-      val = newVal;
+      if (getter && !setter) return
+      if (setter) {
+        setter.call(obj, newVal);
+      } else {
+        val = newVal;
+      }
       childOb = !shallow && observe(newVal);
       dep.notify();
     }
@@ -241,18 +260,30 @@ function _traverse(val, seen) {
 }
 
 class Watcher {
-  constructor(vm, expOrFn, cb, deep, sync) {
+  constructor(vm, expOrFn, cb, options = {}) {
     this.vm = vm;
     this.cb = cb;
-    this.deep = deep;
-    this.sync = sync;
+    this.deep = !!options.deep;
+    this.user = !!options.user;
+    this.lazy = !!options.lazy;
+    this.sync = !!options.sync;
+    this.dirty = this.lazy;
     this.depMap = {};
     this.deps = [];
     this.newDeps = [];
     this.depIds = new Set();
     this.newDepIds = new Set();
-    this.getter = this.parsePath(expOrFn);
-    this.value = this.get();
+    if (typeof expOrFn === 'function') {
+      this.getter = expOrFn;
+    } else {
+      this.getter = this.parsePath(expOrFn);
+      if (!this.getter) {
+        this.getter = noop;
+      }
+    }
+    this.value = this.lazy
+      ? undefined
+      : this.get();
   }
   parsePath(exp) {
     if (/[^\w.$]/.test(exp)) {
@@ -290,20 +321,6 @@ class Watcher {
       }
     }
   }
-  update() {
-    const newVal = this.get();
-    const oldVal = this.value;
-    if (newVal !== oldVal || isObject(newVal) || this.deep) {
-      this.value = newVal;
-      if (this.sync) {
-        this.cb.call(this.vm, newVal, oldVal);
-      } else {
-        setTimeout(() => {
-          this.cb.call(this.vm, newVal, oldVal);
-        }, 0);
-      }
-    }
-  }
   cleanupDeps() {
     let i = this.deps.length;
     while (i--) {
@@ -321,44 +338,70 @@ class Watcher {
     this.newDeps = tmp;
     this.newDeps.length = 0;
   }
+  update() {
+    if (this.lazy) {
+      this.dirty = true;
+    } else {
+      this.run();
+    }
+  }
+  run() {
+    const newVal = this.get();
+    const oldVal = this.value;
+    if (newVal !== oldVal || isObject(newVal) || this.deep) {
+      this.value = newVal;
+      if (this.sync) {
+        this.cb.call(this.vm, newVal, oldVal);
+      } else {
+        setTimeout(() => {
+          this.cb.call(this.vm, newVal, oldVal);
+        }, 1000 / 30);
+      }
+    }
+  }
+  evaluate() {
+    this.value = this.get();
+    this.dirty = false;
+  }
+  depend() {
+    let i = this.deps.length;
+    while (i--) {
+      this.deps[i].depend();
+    }
+  }
 }
 
-function createWatcher(data, expOrFn, fn, deep, sync) {
-  return new Watcher(data, expOrFn, fn, deep, sync)
+function observeData(vm, data) {
+  if (!vm._hasObserveData) {
+    observe(data);
+    vm._hasObserveData = true;
+  }
 }
 
-let hasObserveGlobalData = false;
+function createWatcher(vm, data, expOrFn, handler, options = {}) {
+  if (isPlainObject(handler)) {
+    options = handler;
+    handler = handler.handler;
+  }
+  const watcher = new Watcher(data, expOrFn, handler.bind(vm), options);
+  if (options.immediate) {
+    handler.call(vm, watcher.value);
+  }
+}
 
-function watchData(vm, data, watcher, hookName, isGlobalWatch) {
+function initWatch(vm, data, watch, isGlobalWatch) {
   if (!isPlainObject(data)) {
     return
   }
-
-  if (!hasObserveGlobalData || !isGlobalWatch) {
-    if (isGlobalWatch) {
-      hasObserveGlobalData = true;
-    }
-    observe(data);
-  }
-  
-  for (const key in watcher) {
-    const item = watcher[key];
+  for (const key in watch) {
     const value = data[key];
-    if (isFunction(item)) {
-      if (value === undefined) {
-        warnMissMountedData(hookName, isGlobalWatch, key);
-        continue
+    const handler = watch[key];
+    if (isArray(handler)) {
+      for (let i = 0; i < handler.length; i++) {
+        createWatcher(vm, data, key, handler[i]);
       }
-      createWatcher(data, key, item.bind(vm), false, false);
-    } else if (isPlainObject(item) && isFunction(item.handler)) {
-      if (value === undefined) {
-        warnMissMountedData(hookName, isGlobalWatch, key);
-        continue
-      }
-      if (item.immediate) {
-        item.handler.call(vm, data[key]);
-      }
-      createWatcher(data, key, item.handler.bind(vm), item.deep, item.sync);
+    } else {
+      createWatcher(vm, data, key, handler);
     }
   }
 }
@@ -372,35 +415,9 @@ function getCreatedHook(options, createdHooks) {
   }
 }
 
-function warnMissMountedData(hookName, isGlobalWatch, key) {
-  const mountedData = isGlobalWatch ? 'app.globalData' : 'data';
-  console.warn(`${hookName} hook warn: the key '${key}' have to mounte in ${mountedData} to be watch`);
-}
-
-function warnMissCreaedHooks(hookName, createdHooks) {
-  console.warn(`${hookName} hook need ${createdHooks.join(' or ')} lifecycle function hook`);
-}
-
-function mergeOptions(
-  options,
-  createdHooks,
-  destroyedHooks, 
-  { watch, globalWatch } = { watch: 'watch', globalWatch: 'globalWatch' },
-  isApp,
-  isComponent,
-) {
-  const watcher = options[watch];
-  const globalWatcher = options[globalWatch];
-  const hasWatchHook = watcher && isPlainObject(watcher);
-  const hasGlobalWatchHook = globalWatcher && isPlainObject(globalWatcher);
-
-  if (!hasWatchHook && !hasGlobalWatchHook) {
-    return options
-  }
-
+function getInitHook(options, createdHooks, isComponent) {
   let createdHookOptions;
   let createdHook;
-  let originCreatedHook;
 
   if (!isComponent) {
     createdHook = getCreatedHook(options, createdHooks);
@@ -419,30 +436,61 @@ function mergeOptions(
       createdHookOptions = lifetimes[createdHook] ? lifetimes : options;
     }
   }
+  return {
+    createdHook,
+    createdHookOptions,
+  }
+}
 
-  originCreatedHook = createdHookOptions[createdHook];
+function warnMissCreaedHooks(hookName, createdHooks) {
+  console.warn(`${hookName} hook warn: using ${hookName} hook need ${createdHooks.join(' or ')} lifecycle function hook`);
+}
 
+function mergeOptions(
+  options,
+  createdHooks,
+  destroyedHooks,
+  isApp,
+  isComponent,
+) {
+  const globalWatch = options.globalWatch;
+  const watch = options.watch;
+
+  if (!isApp && !globalWatch && !watch) {
+    return options
+  }
+
+  const {
+    createdHookOptions,
+    createdHook,
+  } = getInitHook(options, createdHooks, isComponent);
+
+  const originCreatedHook = createdHookOptions[createdHook];
   const hasOriginCreatedHook = originCreatedHook && isFunction(originCreatedHook);
 
   if (hasOriginCreatedHook) {
     createdHookOptions[createdHook] = function () {
-      if (hasWatchHook) {
-        const data = this.data;
-        watchData(this, data, watcher, watch, false);
+      if (isApp) {
+        observeData(this, options.globalData);
       }
-      if (hasGlobalWatchHook) {
+      if (globalWatch) {
         let globalData;
         if (!isApp) {
           globalData = getApp().globalData;
         } else {
           globalData = options.globalData;
         }
-        watchData(this, globalData, globalWatcher, globalWatch, true);
+        initWatch(this, globalData, globalWatch);
+      }
+      if (watch) {
+        const data = this.data;
+        observeData(this, data);
+        initWatch(this, data, watch);
       }
       return originCreatedHook.apply(this, arguments)
     };
   } else {
-    const hookName = hasWatchHook ? watch : globalWatch;
+    const hookName = watch ? 'watch' : 'globalWatch';
     warnMissCreaedHooks(hookName, createdHooks);
   }
   return options
@@ -463,7 +511,6 @@ var appWatchInstaller = {
         options,
         createdHooks,
         destroyedHooks,
-        { watch: 'watch', globalWatch: 'globalWatch' },
         true,
         false,
       );
@@ -487,7 +534,6 @@ var pageWatchInstaller = {
         options,
         createdHooks$1,
         destroyedHooks$1,
-        { watch: 'watch', globalWatch: 'globalWatch' },
         false,
         false,
       );
@@ -511,7 +557,6 @@ var componentWatchInstaller = {
         options,
         createdHooks$2,
         destroyedHooks$2,
-        { watch: 'watch', globalWatch: 'globalWatch' },
         false,
         true,
       );
@@ -530,7 +575,7 @@ const wxWatch = {
     pageWatchInstaller.install();
     componentWatchInstaller.install();
   },
-  verson: '1.0.3'
+  verson: '1.0.4'
 };
 
 wxWatch.install();

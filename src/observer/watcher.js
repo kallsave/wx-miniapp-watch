@@ -1,20 +1,32 @@
 import Dep, { pushTarget, popTarget } from './dep'
 import { traverse } from './traverse'
-import { isObject } from '../util/lang'
+import { isObject, noop } from '../util/lang'
 
-export class Watcher {
-  constructor(vm, expOrFn, cb, deep, sync) {
+export default class Watcher {
+  constructor(vm, expOrFn, cb, options = {}) {
     this.vm = vm
     this.cb = cb
-    this.deep = deep
-    this.sync = sync
+    this.deep = !!options.deep
+    this.user = !!options.user
+    this.lazy = !!options.lazy
+    this.sync = !!options.sync
+    this.dirty = this.lazy
     this.depMap = {}
     this.deps = []
     this.newDeps = []
     this.depIds = new Set()
     this.newDepIds = new Set()
-    this.getter = this.parsePath(expOrFn)
-    this.value = this.get()
+    if (typeof expOrFn === 'function') {
+      this.getter = expOrFn
+    } else {
+      this.getter = this.parsePath(expOrFn)
+      if (!this.getter) {
+        this.getter = noop
+      }
+    }
+    this.value = this.lazy
+      ? undefined
+      : this.get()
   }
   parsePath(exp) {
     if (/[^\w.$]/.test(exp)) {
@@ -52,20 +64,6 @@ export class Watcher {
       }
     }
   }
-  update() {
-    const newVal = this.get()
-    const oldVal = this.value
-    if (newVal !== oldVal || isObject(newVal) || this.deep) {
-      this.value = newVal
-      if (this.sync) {
-        this.cb.call(this.vm, newVal, oldVal)
-      } else {
-        setTimeout(() => {
-          this.cb.call(this.vm, newVal, oldVal)
-        }, 0)
-      }
-    }
-  }
   cleanupDeps() {
     let i = this.deps.length
     while (i--) {
@@ -83,8 +81,35 @@ export class Watcher {
     this.newDeps = tmp
     this.newDeps.length = 0
   }
-}
-
-export function createWatcher(data, expOrFn, fn, deep, sync) {
-  return new Watcher(data, expOrFn, fn, deep, sync)
+  update() {
+    if (this.lazy) {
+      this.dirty = true
+    } else {
+      this.run()
+    }
+  }
+  run() {
+    const newVal = this.get()
+    const oldVal = this.value
+    if (newVal !== oldVal || isObject(newVal) || this.deep) {
+      this.value = newVal
+      if (this.sync) {
+        this.cb.call(this.vm, newVal, oldVal)
+      } else {
+        setTimeout(() => {
+          this.cb.call(this.vm, newVal, oldVal)
+        }, 1000 / 30)
+      }
+    }
+  }
+  evaluate() {
+    this.value = this.get()
+    this.dirty = false
+  }
+  depend() {
+    let i = this.deps.length
+    while (i--) {
+      this.deps[i].depend()
+    }
+  }
 }

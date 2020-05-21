@@ -44,3 +44,5 @@ export function remove(arr, item) {
     }
   }
 }
+
+export function noop() { }

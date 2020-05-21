@@ -5,34 +5,44 @@ import Dep from './dep'
 const hasProto = '__proto__' in {}
 
 function defineReactive(obj, key, val, shallow) {
+  const dep = new Dep()
+
   const property = Object.getOwnPropertyDescriptor(obj, key)
   if (property && property.configurable === false) {
     return
   }
-  if (arguments.length === 2) {
+
+  const getter = property && property.get
+  const setter = property && property.set
+  if ((!getter || setter) && arguments.length === 2) {
     val = obj[key]
   }
-  const dep = new Dep()
+  
   let childOb = !shallow && observe(val)
   Object.defineProperty(obj, key, {
     enumerable: true,
     configurable: true,
     get() {
+      const value = getter ? getter.call(obj) : val
       if (Dep.target) {
         dep.depend()
         if (childOb) {
           childOb.dep.depend()
         }
       }
-      return val
+      return value
     },
     set(newVal) {
       /* eslint no-self-compare: "off" */
       if (newVal === val || (newVal !== newVal && val !== val)) {
         return
       }
-      const oldVal = val
-      val = newVal
+      if (getter && !setter) return
+      if (setter) {
+        setter.call(obj, newVal)
+      } else {
+        val = newVal
+      }
       childOb = !shallow && observe(newVal)
       dep.notify()
     }

@@ -1,44 +1,45 @@
 import { observe } from '../observer/index'
-import { createWatcher } from '../observer/watcher'
+import Watcher from '../observer/watcher'
+
 import {
   isPlainObject,
   isFunction,
   isArray,
-  isEmptyObject
+  isEmptyObject,
+  noop,
 } from './lang'
 
-let hasObserveGlobalData = false
+function observeData(vm, data) {
+  if (!vm._hasObserveData) {
+    observe(data)
+    vm._hasObserveData = true
+  }
+}
 
-function watchData(vm, data, watcher, hookName, isGlobalWatch) {
+function createWatcher(vm, data, expOrFn, handler, options = {}) {
+  if (isPlainObject(handler)) {
+    options = handler
+    handler = handler.handler
+  }
+  const watcher = new Watcher(data, expOrFn, handler.bind(vm), options)
+  if (options.immediate) {
+    handler.call(vm, watcher.value)
+  }
+}
+
+function initWatch(vm, data, watch, isGlobalWatch) {
   if (!isPlainObject(data)) {
     return
   }
-
-  if (!hasObserveGlobalData || !isGlobalWatch) {
-    if (isGlobalWatch) {
-      hasObserveGlobalData = true
-    }
-    observe(data)
-  }
-  
-  for (const key in watcher) {
-    const item = watcher[key]
+  for (const key in watch) {
     const value = data[key]
-    if (isFunction(item)) {
-      if (value === undefined) {
-        warnMissMountedData(hookName, isGlobalWatch, key)
-        continue
+    const handler = watch[key]
+    if (isArray(handler)) {
+      for (let i = 0; i < handler.length; i++) {
+        createWatcher(vm, data, key, handler[i])
       }
-      createWatcher(data, key, item.bind(vm), false, false)
-    } else if (isPlainObject(item) && isFunction(item.handler)) {
-      if (value === undefined) {
-        warnMissMountedData(hookName, isGlobalWatch, key)
-        continue
-      }
-      if (item.immediate) {
-        item.handler.call(vm, data[key])
-      }
-      createWatcher(data, key, item.handler.bind(vm), item.deep, item.sync)
+    } else {
+      createWatcher(vm, data, key, handler)
     }
   }
 }
@@ -52,32 +53,7 @@ function getCreatedHook(options, createdHooks) {
   }
 }
 
-function warnMissMountedData(hookName, isGlobalWatch, key) {
-  const mountedData = isGlobalWatch ? 'app.globalData' : 'data'
-  console.warn(`${hookName} hook warn: the key '${key}' have to mounte in ${mountedData} to be watch`)
-}
-
-function warnMissCreaedHooks(hookName, createdHooks) {
-  console.warn(`${hookName} hook need ${createdHooks.join(' or ')} lifecycle function hook`)
-}
-
-export function mergeOptions(
-  options,
-  createdHooks,
-  destroyedHooks, 
-  { watch, globalWatch } = { watch: 'watch', globalWatch: 'globalWatch' },
-  isApp,
-  isComponent,
-) {
-  const watcher = options[watch]
-  const globalWatcher = options[globalWatch]
-  const hasWatchHook = watcher && isPlainObject(watcher)
-  const hasGlobalWatchHook = globalWatcher && isPlainObject(globalWatcher)
-
-  if (!hasWatchHook && !hasGlobalWatchHook) {
-    return options
-  }
-
+function getInitHook(options, createdHooks, isComponent) {
   let createdHookOptions
   let createdHook
   let originCreatedHook
@@ -99,30 +75,61 @@ export function mergeOptions(
       createdHookOptions = lifetimes[createdHook] ? lifetimes : options
     }
   }
+  return {
+    createdHook,
+    createdHookOptions,
+  }
+}
 
-  originCreatedHook = createdHookOptions[createdHook]
+function warnMissCreaedHooks(hookName, createdHooks) {
+  console.warn(`${hookName} hook warn: using ${hookName} hook need ${createdHooks.join(' or ')} lifecycle function hook`)
+}
 
+export function mergeOptions(
+  options,
+  createdHooks,
+  destroyedHooks,
+  isApp,
+  isComponent,
+) {
+  const globalWatch = options.globalWatch
+  const watch = options.watch
+
+  if (!isApp && !globalWatch && !watch) {
+    return options
+  }
+
+  const {
+    createdHookOptions,
+    createdHook,
+  } = getInitHook(options, createdHooks, isComponent)
+
+  const originCreatedHook = createdHookOptions[createdHook]
   const hasOriginCreatedHook = originCreatedHook && isFunction(originCreatedHook)
 
   if (hasOriginCreatedHook) {
     createdHookOptions[createdHook] = function () {
-      if (hasWatchHook) {
-        const data = this.data
-        watchData(this, data, watcher, watch, false)
+      if (isApp) {
+        observeData(this, options.globalData)
       }
-      if (hasGlobalWatchHook) {
+      if (globalWatch) {
         let globalData
         if (!isApp) {
           globalData = getApp().globalData
         } else {
           globalData = options.globalData
         }
-        watchData(this, globalData, globalWatcher, globalWatch, true)
+        initWatch(this, globalData, globalWatch, true)
+      }
+      if (watch) {
+        const data = this.data
+        observeData(this, data)
+        initWatch(this, data, watch, false)
       }
       return originCreatedHook.apply(this, arguments)
     }
   } else {
-    const hookName = hasWatchHook ? watch : globalWatch
+    const hookName = watch ? 'watch' : 'globalWatch'
     warnMissCreaedHooks(hookName, createdHooks)
   }
   return options

@@ -11,12 +11,15 @@ export default class Dep {
     this.subs.push(sub)
   }
   notify() {
-    this.subs.forEach(sub => {
-      sub.update()
-    })
+    const subs = this.subs
+    for (let i = 0, l = subs.length; i < l; i++) {
+      subs[i].update()
+    }
   }
   depend() {
-    Dep.target.addDep(this)
+    if (Dep.target) {
+      Dep.target.addDep(this)
+    }
   }
   removeSub(sub) {
     remove(this.subs, sub)
@@ -24,11 +27,14 @@ export default class Dep {
 }
 
 Dep.target = null
+const targetStack = []
 
 export function pushTarget(target) {
+  targetStack.push(target)
   Dep.target = target
 }
 
 export function popTarget() {
-  Dep.target = null
+  targetStack.pop()
+  Dep.target = targetStack[targetStack.length - 1]
 }

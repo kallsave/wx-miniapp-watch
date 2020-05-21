@@ -15,7 +15,6 @@ export default {
         options,
         createdHooks,
         destroyedHooks,
-        { watch: 'watch', globalWatch: 'globalWatch' },
         false,
         true,
       )
