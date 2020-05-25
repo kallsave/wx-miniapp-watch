@@ -1,12 +1,13 @@
 import { observe } from '../observer/index'
 import Watcher from '../observer/watcher'
+import { hasOwn } from '../util/lang'
 
 import {
   isPlainObject,
   isFunction,
   isArray,
   isEmptyObject,
-  noop,
+  isString,
 } from './lang'
 
 function observeData(vm, data) {
@@ -20,6 +21,8 @@ function createWatcher(vm, data, expOrFn, handler, options = {}) {
   if (isPlainObject(handler)) {
     options = handler
     handler = handler.handler
+  } else if (isString(handler)) {
+    handler = vm[handler]
   }
   const watcher = new Watcher(data, expOrFn, handler.bind(vm), options)
   if (options.immediate) {
@@ -32,8 +35,9 @@ function initWatch(vm, data, watch, isGlobalWatch) {
     return
   }
   for (const key in watch) {
-    const value = data[key]
-    warnMissDefined(isGlobalWatch, key)
+    if (!hasOwn(data, key)) {
+      warnMissDefined(isGlobalWatch, key)
+    }
     const handler = watch[key]
     if (isArray(handler)) {
       for (let i = 0; i < handler.length; i++) {

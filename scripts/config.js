@@ -35,7 +35,7 @@ const buildMap = {
     input: resolve('src/index.js'),
     output: {
       file: resolve(`dist/${name}.js`),
-      format: 'es',
+      format: 'esm',
       banner: banner
     },
   },

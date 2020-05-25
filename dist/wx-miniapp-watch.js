@@ -1,8 +1,14 @@
 /*!
- * wx-miniapp-watch.js v1.0.4
+ * wx-miniapp-watch.js v1.0.5
  * (c) 2019-2020 kallsave
  * Released under the MIT License.
  */
+const hasOwnProperty = Object.prototype.hasOwnProperty;
+
+function hasOwn(obj, key) {
+  return hasOwnProperty.call(obj, key)
+}
+
 const _toString = Object.prototype.toString;
 
 function toRawType(value) {
@@ -30,6 +36,10 @@ function isEmptyObject(value) {
     return Object.keys(value).length === 0
   }
   return false
+}
+
+function isString(value) {
+  return toRawType(value) === 'String'
 }
 
 function def(obj, key, val, enumerable) {
@@ -382,6 +392,8 @@ function createWatcher(vm, data, expOrFn, handler, options = {}) {
   if (isPlainObject(handler)) {
     options = handler;
     handler = handler.handler;
+  } else if (isString(handler)) {
+    handler = vm[handler];
   }
   const watcher = new Watcher(data, expOrFn, handler.bind(vm), options);
   if (options.immediate) {
@@ -394,7 +406,9 @@ function initWatch(vm, data, watch, isGlobalWatch) {
     return
   }
   for (const key in watch) {
-    const value = data[key];
+    if (!hasOwn(data, key)) {
+      warnMissDefined(isGlobalWatch, key);
+    }
     const handler = watch[key];
     if (isArray(handler)) {
       for (let i = 0; i < handler.length; i++) {
@@ -446,6 +460,12 @@ function warnMissCreaedHooks(hookName, createdHooks) {
   console.warn(`${hookName} hook warn: using ${hookName} hook need ${createdHooks.join(' or ')} lifecycle function hook`);
 }
 
+function warnMissDefined(isGlobalWatch, key) {
+  const hookName = isGlobalWatch ? 'globalWatch' : 'watch';
+  const definedData = isGlobalWatch ? 'app.globalData' : 'data';
+  console.warn(`${hookName} hook warn: '${key}' have to defined in ${definedData} to be watch`);
+}
+
 function mergeOptions(
   options,
   createdHooks,
@@ -480,17 +500,17 @@ function mergeOptions(
         } else {
           globalData = options.globalData;
         }
-        initWatch(this, globalData, globalWatch);
+        initWatch(this, globalData, globalWatch, true);
       }
       if (watch) {
         const data = this.data;
         observeData(this, data);
-        initWatch(this, data, watch);
+        initWatch(this, data, watch, false);
       }
       return originCreatedHook.apply(this, arguments)
     };
   } else {
-    const hookName = watch ? 'watch' : 'globalWatch';
+    const hookName = globalWatch ? 'globalWatch' : 'watch';
     warnMissCreaedHooks(hookName, createdHooks);
   }
   return options
@@ -575,7 +595,7 @@ const wxWatch = {
     pageWatchInstaller.install();
     componentWatchInstaller.install();
   },
-  verson: '1.0.4'
+  verson: '1.0.5'
 };
 
 wxWatch.install();
