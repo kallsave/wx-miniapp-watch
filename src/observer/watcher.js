@@ -28,6 +28,7 @@ export default class Watcher {
       ? undefined
       : this.get()
   }
+
   parsePath(exp) {
     if (/[^\w.$]/.test(exp)) {
       return
@@ -44,6 +45,7 @@ export default class Watcher {
       return obj
     }
   }
+
   get() {
     pushTarget(this)
     const value = this.getter.call(this.vm, this.vm)
@@ -54,6 +56,7 @@ export default class Watcher {
     this.cleanupDeps()
     return value
   }
+
   addDep(dep) {
     const id = dep.id
     if (!this.newDepIds.has(id)) {
@@ -64,6 +67,7 @@ export default class Watcher {
       }
     }
   }
+
   cleanupDeps() {
     let i = this.deps.length
     while (i--) {
@@ -81,6 +85,7 @@ export default class Watcher {
     this.newDeps = tmp
     this.newDeps.length = 0
   }
+
   update() {
     if (this.lazy) {
       this.dirty = true
@@ -88,6 +93,7 @@ export default class Watcher {
       this.run()
     }
   }
+
   run() {
     const newVal = this.get()
     const oldVal = this.value
@@ -102,10 +108,12 @@ export default class Watcher {
       }
     }
   }
+
   evaluate() {
     this.value = this.get()
     this.dirty = false
   }
+
   depend() {
     let i = this.deps.length
     while (i--) {

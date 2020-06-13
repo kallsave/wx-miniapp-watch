@@ -17,7 +17,7 @@ function defineReactive(obj, key, val, shallow) {
   if ((!getter || setter) && arguments.length === 2) {
     val = obj[key]
   }
-  
+
   let childOb = !shallow && observe(val)
   Object.defineProperty(obj, key, {
     enumerable: true,
@@ -71,6 +71,7 @@ class Observer {
       this.walk(value)
     }
   }
+
   walk(obj) {
     const keys = Object.keys(obj)
     for (let i = 0; i < keys.length; i++) {
@@ -78,6 +79,7 @@ class Observer {
       defineReactive(obj, key, obj[key])
     }
   }
+
   observeArray(arr) {
     for (let i = 0, l = arr.length; i < l; i++) {
       const item = arr[i]

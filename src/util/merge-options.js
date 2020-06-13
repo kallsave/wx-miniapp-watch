@@ -1,6 +1,5 @@
 import { observe } from '../observer/index'
 import Watcher from '../observer/watcher'
-import { hasOwn } from '../util/lang'
 
 import {
   isPlainObject,
@@ -8,14 +7,8 @@ import {
   isArray,
   isEmptyObject,
   isString,
+  hasOwn,
 } from './lang'
-
-function observeData(vm, data) {
-  if (!vm._hasObserveData) {
-    observe(data)
-    vm._hasObserveData = true
-  }
-}
 
 function createWatcher(vm, data, expOrFn, handler, options = {}) {
   if (isPlainObject(handler)) {
@@ -120,7 +113,7 @@ export function mergeOptions(
   if (hasOriginCreatedHook) {
     createdHookOptions[createdHook] = function () {
       if (isApp) {
-        observeData(this, options.globalData)
+        observe(options.globalData)
       }
       if (globalWatch) {
         let globalData
@@ -133,7 +126,7 @@ export function mergeOptions(
       }
       if (watch) {
         const data = this.data
-        observeData(this, data)
+        observe(data)
         initWatch(this, data, watch, false)
       }
       return originCreatedHook.apply(this, arguments)

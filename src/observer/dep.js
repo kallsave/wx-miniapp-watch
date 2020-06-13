@@ -7,15 +7,18 @@ export default class Dep {
     this.id = uid++
     this.subs = []
   }
+
   addSub(sub) {
     this.subs.push(sub)
   }
+
   notify() {
     const subs = this.subs
     for (let i = 0, l = subs.length; i < l; i++) {
       subs[i].update()
     }
   }
+
   depend() {
     if (Dep.target) {
       Dep.target.addDep(this)

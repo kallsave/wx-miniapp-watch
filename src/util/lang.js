@@ -11,7 +11,7 @@ export function toRawType(value) {
 }
 
 export function isObject(value) {
-  return value !== null && typeof value === 'object'
+  return value && typeof value === 'object'
 }
 
 export function isArray(value) {

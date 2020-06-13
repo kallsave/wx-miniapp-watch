@@ -5,20 +5,22 @@ wx-miniapp-watch
 ------------
 给微信小程序带来
 - 1.vue体验的watch语法(immediate, deep),给App,Page,Component函数增加watch的功能
-- 2.全局状态管理globalWatch,给App,Page,Component函数增加watch的功能
+- 2.全局状态管理globalWatch,给App,Page,Component函数增加监听app.globalData的globalWatch的功能
 
+安装
+------------
+npm install wx-miniapp-watch --save
 
 使用
------------
+------------
 ```javascript
 // app.js
-// 给App, Page, Component函数增加watch功能监听data的数据
-// 给Page, Component函数增加globalWatch功能监听getApp().global的数据
+// 导入js给App,Page,Component增加扩展globalWatch,watch的扩展
 import 'wx-miniapp-watch'
 ```
 
 ```javascript
-// index.js
+// app.js
 App({
   globalData: {
     test: 0
@@ -37,6 +39,8 @@ App({
       immediate: true,
       // 是否是同步,默认异步
       sync: true,
+      // 深度监听
+      deep: true,
     }
   },
   // 能监听在data申明的变量
@@ -55,11 +59,13 @@ App({
 // page.js
 Page({
   data: {
-    bar: 0
+    bar: 0,
+    count: '',
+    
   },
   // 能监听在app.globalData申明的变量
   globalWatch: {
-     // 监听app.globalData.test的变化
+    // 监听app.globalData.test的变化
     test: {
       handler(newVal, oldVal) {
         console.log(newVal, oldVal)
@@ -68,6 +74,8 @@ Page({
       immediate: true,
       // 是否是同步,默认异步
       sync: true,
+      // 深度监听
+      deep: true,
     }
   },
   // 能监听在data申明的变量
@@ -81,7 +89,13 @@ Page({
       immediate: true,
       // 是否是同步,默认异步
       sync: true,
-    }
+      // 深度监听
+      deep: true,
+    },
+    count: 'countChangeHandler'
+  },
+  countChangeHandler() {
+    console.log(this.data.count)
   }
 })
 ```
@@ -91,6 +105,9 @@ Page({
 Component({
   data: {
     foo: 0
+  },
+  ready() {
+    this.data.foo = 1
   },
   // 监听app.globalData.test的变化
   globalWatch: {
@@ -115,6 +132,14 @@ Component({
       immediate: true,
       // 是否是同步,默认异步
       sync: true,
+      // 深度监听
+      deep: true,
+    },
+    count: 'countChangeHandler'
+  },
+  methods: {
+    countChangeHandler() {
+      console.log(this.data.count)
     }
   }
 })
