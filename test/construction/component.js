@@ -1,40 +1,16 @@
-import {
-  mergeOptions,
-} from '../../src/util/merge-options'
+import './app'
+import componentWatchInstaller from '../../src/construction/component'
 
-import {
-  getApp
-} from './app'
+componentWatchInstaller.install()
 
-function Component(options) {
-  options.created()
-  options.attached()
-  return options
-}
-
-const createdHooks = ['created', 'attached', 'ready']
-const destroyedHooks = ['onUnload']
-const originComponent = Component
-
-Component = function (options) {
-  options = mergeOptions(
-    options,
-    createdHooks,
-    destroyedHooks,
-    false,
-    false,
-  )
-  return originComponent(options)
-}
-
-export const expectData = {
+const expectData = {
   hasRegister: false,
   number: 0,
   count: 0,
   age: 0,
 }
 
-const component = Component({
+const options = {
   globalData: {
     hasRegister: expectData.hasRegister,
   },
@@ -82,6 +58,8 @@ const component = Component({
   numberChangeHanlder() {
     expectData.number++
   }
-})
+}
 
-export default component
+Component(options)
+
+export default expectData

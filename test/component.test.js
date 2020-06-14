@@ -1,4 +1,4 @@
-import { expectData } from './construction/component'
+import expectData from './construction/component'
 
 describe('test component watch', () => {
 

@@ -1,40 +1,16 @@
-import {
-  mergeOptions,
-} from '../../src/util/merge-options'
+import './app'
+import pageWatchInstaller from '../../src/construction/page'
 
-import {
-  getApp
-} from './app'
+pageWatchInstaller.install()
 
-function Page(options) {
-  options.onLoad()
-  options.onShow()
-  return options
-}
-
-const createdHooks = ['onLoad']
-const destroyedHooks = ['onUnload']
-const originPage = Page
-
-Page = function (options) {
-  options = mergeOptions(
-    options,
-    createdHooks,
-    destroyedHooks,
-    false,
-    false,
-  )
-  return originPage(options)
-}
-
-export const expectData = {
+const expectData = {
   hasRegister: false,
   number: 0,
   count: 0,
   age: 0,
 }
 
-const page = Page({
+const options = {
   globalData: {
     hasRegister: expectData.hasRegister,
   },
@@ -82,6 +58,8 @@ const page = Page({
   numberChangeHanlder() {
     expectData.number++
   }
-})
+}
 
-export default page
+Page(options)
+
+export default expectData

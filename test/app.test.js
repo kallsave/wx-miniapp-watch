@@ -1,4 +1,4 @@
-import { expectData } from './construction/app'
+import expectData from './construction/app'
 
 describe('test app watch', () => {
 
