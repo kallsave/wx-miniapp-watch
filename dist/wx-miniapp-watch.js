@@ -1,5 +1,5 @@
 /*!
- * wx-miniapp-watch.js v1.0.7
+ * wx-miniapp-watch.js v1.0.8
  * (c) 2019-2020 kallsave <415034609@qq.com>
  * Released under the MIT License.
  */
@@ -668,7 +668,7 @@ function mergeOptions(options, createdHooks, destroyedHooks, isApp, isComponent)
 var createdHooks = ['onLaunch'];
 var destroyedHooks = [];
 var originApp = App;
-var appWatchInstaller = {
+var appInstaller = {
   install: function install() {
     if (this.installed) {
       return;
@@ -686,7 +686,7 @@ var appWatchInstaller = {
 var createdHooks$1 = ['onLoad'];
 var destroyedHooks$1 = ['onUnload'];
 var originPage = Page;
-var pageWatchInstaller = {
+var pageInstaller = {
   install: function install() {
     if (this.installed) {
       return;
@@ -704,7 +704,7 @@ var pageWatchInstaller = {
 var createdHooks$2 = ['created', 'attached', 'ready'];
 var destroyedHooks$2 = ['onUnload'];
 var originComponent = Component;
-var componentWatchInstaller = {
+var componentInstaller = {
   install: function install() {
     if (this.installed) {
       return;
@@ -719,19 +719,19 @@ var componentWatchInstaller = {
   }
 };
 
-var wxWatch = {
+var plugin = {
   install: function install() {
     if (this.installed) {
       return;
     }
 
     this.installed = true;
-    appWatchInstaller.install();
-    pageWatchInstaller.install();
-    componentWatchInstaller.install();
+    appInstaller.install();
+    pageInstaller.install();
+    componentInstaller.install();
   },
-  verson: '1.0.7'
+  verson: '1.0.8'
 };
-wxWatch.install();
+plugin.install();
 
-export default wxWatch;
+export default plugin;

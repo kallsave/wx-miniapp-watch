@@ -1,20 +1,20 @@
-import appWatchInstaller from './construction/app'
-import pageWatchInstaller from './construction/page'
-import componentWatchInstaller from './construction/component'
+import appInstaller from './construction/app'
+import pageInstaller from './construction/page'
+import componentInstaller from './construction/component'
 
-const wxWatch = {
+const plugin = {
   install() {
     if (this.installed) {
       return
     }
     this.installed = true
-    appWatchInstaller.install()
-    pageWatchInstaller.install()
-    componentWatchInstaller.install()
+    appInstaller.install()
+    pageInstaller.install()
+    componentInstaller.install()
   },
-  verson: '1.0.7'
+  verson: '1.0.8'
 }
 
-wxWatch.install()
+plugin.install()
 
-export default wxWatch
+export default plugin

@@ -5,7 +5,7 @@ wx-miniapp-watch
 ------------
 给微信小程序带来
 - 1.vue体验的watch语法(immediate, deep),给App,Page,Component函数增加watch的功能
-- 2.全局状态管理globalWatch,给App,Page,Component函数增加监听app.globalData的globalWatch的功能
+- 2.全局状态管理globalWatch,给App,Page,Component函数增加监听app.globalData的globalWatch的扩展功能
 
 安装
 ------------
@@ -13,10 +13,11 @@ npm install wx-miniapp-watch --save
 
 使用
 ------------
+在微信开发者工具中先构建npm生成miniprogram_npm文件夹
 ```javascript
 // app.js
-// 导入js给App,Page,Component增加扩展globalWatch,watch的扩展
-import 'wx-miniapp-watch'
+// 导入js给App,Page,Component增加watch,globalWatch的扩展
+import './miniprogram_npm/wx-miniapp-watch/index'
 ```
 
 ```javascript
