@@ -12,7 +12,7 @@ const plugin = {
     pageInstaller.install()
     componentInstaller.install()
   },
-  verson: '1.0.8'
+  verson: 'VERSION'
 }
 
 plugin.install()
