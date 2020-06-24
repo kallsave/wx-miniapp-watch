@@ -24,7 +24,8 @@ import './miniprogram_npm/wx-miniapp-watch/index'
 // app.js
 App({
   globalData: {
-    test: 0
+    test: 0,
+    hasLogin: false
   },
   data: {
     count: 1
@@ -52,6 +53,29 @@ App({
         console.log(newVal, oldVal)
       }
     }
+  },
+  onShow() {
+    this.$watch('count', (newVal, oldVal) => {
+      console.log(newVal, oldVal)
+    }, {
+      // 第一次立刻执行
+      immediate: true,
+      // 是否是同步,默认异步
+      sync: true,
+      // 深度监听
+      deep: true,
+    })
+
+    this.$globalWatch('hasLogin', (newVal, oldVal) => {
+      console.log(newVal, oldVal)
+    }, {
+      // 第一次立刻执行
+      immediate: true,
+      // 是否是同步,默认异步
+      sync: true,
+      // 深度监听
+      deep: true,
+    })
   }
 })
 ```
@@ -61,8 +85,7 @@ App({
 Page({
   data: {
     bar: 0,
-    count: '',
-    
+    count: 0,
   },
   // 能监听在app.globalData申明的变量
   globalWatch: {
@@ -95,6 +118,29 @@ Page({
     },
     count: 'countChangeHandler'
   },
+  onShow() {
+    this.$watch('count', (newVal, oldVal) => {
+      console.log(newVal, oldVal)
+    }, {
+      // 第一次立刻执行
+      immediate: true,
+      // 是否是同步,默认异步
+      sync: true,
+      // 深度监听
+      deep: true,
+    })
+
+    this.$globalWatch('hasLogin', (newVal, oldVal) => {
+      console.log(newVal, oldVal)
+    }, {
+      // 第一次立刻执行
+      immediate: true,
+      // 是否是同步,默认异步
+      sync: true,
+      // 深度监听
+      deep: true,
+    })
+  },
   countChangeHandler() {
     console.log(this.data.count)
   }
@@ -105,7 +151,8 @@ Page({
 // component.js
 Component({
   data: {
-    foo: 0
+    foo: 0,
+    count: 0
   },
   ready() {
     this.data.foo = 1
@@ -138,6 +185,29 @@ Component({
     },
     count: 'countChangeHandler'
   },
+  onShow() {
+    this.$watch('count', (newVal, oldVal) => {
+      console.log(newVal, oldVal)
+    }, {
+      // 第一次立刻执行
+      immediate: true,
+      // 是否是同步,默认异步
+      sync: true,
+      // 深度监听
+      deep: true,
+    })
+
+    this.$globalWatch('hasLogin', (newVal, oldVal) => {
+      console.log(newVal, oldVal)
+    }, {
+      // 第一次立刻执行
+      immediate: true,
+      // 是否是同步,默认异步
+      sync: true,
+      // 深度监听
+      deep: true,
+    })
+  }
   methods: {
     countChangeHandler() {
       console.log(this.data.count)
