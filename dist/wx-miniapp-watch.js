@@ -1,14 +1,8 @@
 /*!
- * wx-miniapp-watch.js v1.0.9
+ * wx-miniapp-watch.js v1.1.0
  * (c) 2019-2020 kallsave <415034609@qq.com>
  * Released under the MIT License.
  */
-const hasOwnProperty = Object.prototype.hasOwnProperty;
-
-function hasOwn(obj, key) {
-  return hasOwnProperty.call(obj, key)
-}
-
 const _toString = Object.prototype.toString;
 
 function toRawType(value) {
@@ -407,14 +401,21 @@ function createWatcher(vm, data, expOrFn, handler, options = {}) {
   }
 }
 
+function createWatchApi(vm, data, isGlobalWatch) {
+  if (!isPlainObject(data)) {
+    return
+  }
+  const apiName = isGlobalWatch ? '$globalWatch' : '$watch';
+  vm[apiName] = function (expOrFn, handler, options) {
+    createWatcher(vm, data, expOrFn, handler, options);
+  };
+}
+
 function initWatch(vm, data, watch, isGlobalWatch) {
   if (!isPlainObject(data)) {
     return
   }
   for (const key in watch) {
-    if (!hasOwn(data, key)) {
-      warnMissDefined(isGlobalWatch, key);
-    }
     const handler = watch[key];
     if (isArray(handler)) {
       for (let i = 0; i < handler.length; i++) {
@@ -466,12 +467,6 @@ function warnMissCreaedHooks(hookName, createdHooks) {
   console.warn(`${hookName} hook warn: using ${hookName} hook need ${createdHooks.join(' or ')} lifecycle function hook`);
 }
 
-function warnMissDefined(isGlobalWatch, key) {
-  const hookName = isGlobalWatch ? 'globalWatch' : 'watch';
-  const definedData = isGlobalWatch ? 'app.globalData' : 'data';
-  console.warn(`${hookName} hook warn: '${key}' have to defined in ${definedData} to be watch`);
-}
-
 function mergeOptions(
   options,
   createdHooks,
@@ -499,20 +494,20 @@ function mergeOptions(
       if (isApp) {
         observe(options.globalData);
       }
-      if (globalWatch) {
-        let globalData;
-        if (!isApp) {
-          globalData = getApp().globalData;
-        } else {
-          globalData = options.globalData;
-        }
-        initWatch(this, globalData, globalWatch, true);
+
+      let globalData;
+      if (!isApp) {
+        globalData = getApp().globalData;
+      } else {
+        globalData = options.globalData;
       }
-      if (watch) {
-        const data = this.data;
-        observe(data);
-        initWatch(this, data, watch, false);
-      }
+      initWatch(this, globalData, globalWatch);
+      createWatchApi(this, globalData, true);
+
+      const data = this.data;
+      observe(data);
+      initWatch(this, data, watch);
+      createWatchApi(this, data, false);
       return originCreatedHook.apply(this, arguments)
     };
   } else {
@@ -601,7 +596,7 @@ const plugin = {
     pageInstaller.install();
     componentInstaller.install();
   },
-  verson: '1.0.9'
+  verson: '1.1.0'
 };
 
 plugin.install();

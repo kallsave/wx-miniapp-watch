@@ -13,9 +13,10 @@ describe('test app watch', () => {
   })
 
   it('watch trigger callback', () => {
-    expect(expectData.number).toEqual(2)
+    expect(expectData.number).toEqual(4)
     expect(expectData.count).toEqual(2)
     expect(expectData.age).toEqual(3)
+    expect(expectData.runCount).toEqual(13)
   })
 
 })
